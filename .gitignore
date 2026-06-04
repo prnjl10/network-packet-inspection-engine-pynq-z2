@@ -1,0 +1,26 @@
+# Vivado / Xilinx generated files
+*.log
+*.jou
+*.str
+.Xil/
+vivado_*.str
+vivado_*.ini
+hardware/vivado/project_*/
+hardware/vivado/.Xil/
+
+# Python / Jupyter artifacts
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# SystemVerilog Simulation Outputs
+*.wcfg
+*.wdb
+xsim.dir/
+compile.log
+elaborate.log
+simulate.log
+
+# OS files
+.DS_Store
+Thumbs.db
