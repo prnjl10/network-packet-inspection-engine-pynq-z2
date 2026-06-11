@@ -264,10 +264,11 @@ module rule_checker (
     end else begin
       verdict_valid <= meta_valid;
       if (meta_valid) begin
-        verdict.hit_mask     <= hit_mask;
-        verdict.rule_id      <= rule_id;
-        verdict.anomaly_bits <= anomaly_bits;
-        verdict.drop         <= drop_packet;
+        verdict.rule_hit_mask <= hit_mask;
+        verdict.rule_id       <= rule_id;
+        verdict.anomaly_bits  <= anomaly_bits;
+        verdict.any_hit       <= |hit_mask;
+        verdict.drop          <= drop_packet;
       end
     end
   end
