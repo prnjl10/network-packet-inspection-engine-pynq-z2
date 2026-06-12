@@ -158,6 +158,27 @@ module tb_packet_inspector_top;
     do @(posedge aclk); while (s_axil_bvalid != 1'b1);
     s_axil_bready  <= 1'b0;
   endtask
+  
+  // ---------------------------------------------------------------------------
+  // program_rule -- write one rule table entry over 4 AXI-Lite writes.
+  // Address bits: [11:7]=00001 (rule region), [6:4]=rule_idx, [3:0]=word offset.
+  // ---------------------------------------------------------------------------
+  task program_rule(input logic [2:0]  rule_idx,
+                    input logic [31:0] src_ip,
+                    input logic [31:0] dst_ip,
+                    input logic [15:0] src_port,
+                    input logic [15:0] dst_port,
+                    input logic [7:0]  src_prefix_len,
+                    input logic [7:0]  dst_prefix_len,
+                    input logic [7:0]  protocol,
+                    input logic [2:0]  action,
+                    input logic        enable);
+    axil_write({5'b00001, rule_idx, 4'h0}, src_ip);
+    axil_write({5'b00001, rule_idx, 4'h4}, dst_ip);
+    axil_write({5'b00001, rule_idx, 4'h8}, {src_port, dst_port});
+    axil_write({5'b00001, rule_idx, 4'hC}, {src_prefix_len, dst_prefix_len,
+                                            protocol, action, 4'd0, enable});
+  endtask
 
   // ---------------------------------------------------------------------------
   // Main test sequence
@@ -256,6 +277,73 @@ module tb_packet_inspector_top;
         $display("[FAIL] Test 3: PACKET_COUNT = %0d (expected 1)", rdata);
     end
     
+    // =========================================================================
+    // Test 4 -- rule programming round-trip
+    //
+    // Program rule 0 to DROP any TCP packet with dst port 80 (wildcard
+    // everything else: IPs via prefix_len=0, src port via port=0).
+    // Drive the Test 3 packet again. Expect:
+    //   PACKET_COUNT     == 2  (Test 3's packet + this one)
+    //   DROP_COUNT       == 1
+    //   RULE_HIT_COUNT[0] == 1
+    // =========================================================================
+    begin
+      logic [7:0] pkt2[];
+
+      program_rule(.rule_idx       (3'd0),
+                   .src_ip         (32'h0000_0000),
+                   .dst_ip         (32'h0000_0000),
+                   .src_port       (16'h0000),
+                   .dst_port       (16'h0050),   // port 80
+                   .src_prefix_len (8'h00),       // wildcard
+                   .dst_prefix_len (8'h00),       // wildcard
+                   .protocol       (8'h06),       // TCP
+                   .action         (3'd1),        // drop
+                   .enable         (1'b1));
+
+      // Same 54-byte IPv4/TCP SYN packet as Test 3
+      pkt2 = new[54];
+      pkt2[0]=8'hAA; pkt2[1]=8'hBB; pkt2[2]=8'hCC; pkt2[3]=8'hDD; pkt2[4]=8'hEE; pkt2[5]=8'hFF;
+      pkt2[6]=8'h11; pkt2[7]=8'h22; pkt2[8]=8'h33; pkt2[9]=8'h44; pkt2[10]=8'h55; pkt2[11]=8'h66;
+      pkt2[12]=8'h08; pkt2[13]=8'h00;
+      pkt2[14]=8'h45; pkt2[15]=8'h00;
+      pkt2[16]=8'h00; pkt2[17]=8'h28;
+      pkt2[18]=8'h00; pkt2[19]=8'h00;
+      pkt2[20]=8'h00; pkt2[21]=8'h00;
+      pkt2[22]=8'h40; pkt2[23]=8'h06;
+      pkt2[24]=8'h00; pkt2[25]=8'h00;
+      pkt2[26]=8'hC0; pkt2[27]=8'hA8; pkt2[28]=8'h01; pkt2[29]=8'h0A;
+      pkt2[30]=8'hC0; pkt2[31]=8'hA8; pkt2[32]=8'h01; pkt2[33]=8'h14;
+      pkt2[34]=8'hC3; pkt2[35]=8'h50;
+      pkt2[36]=8'h00; pkt2[37]=8'h50;
+      pkt2[38]=8'h00; pkt2[39]=8'h00; pkt2[40]=8'h00; pkt2[41]=8'h00;
+      pkt2[42]=8'h00; pkt2[43]=8'h00; pkt2[44]=8'h00; pkt2[45]=8'h00;
+      pkt2[46]=8'h50; pkt2[47]=8'h02;
+      pkt2[48]=8'h20; pkt2[49]=8'h00;
+      pkt2[50]=8'h00; pkt2[51]=8'h00;
+      pkt2[52]=8'h00; pkt2[53]=8'h00;
+
+      drive_packet(pkt2);
+      repeat (10) @(posedge aclk);
+
+      axil_read(12'h008, rdata);
+      if (rdata == 32'h0000_0002)
+        $display("[PASS] Test 4: PACKET_COUNT = %0d", rdata);
+      else
+        $display("[FAIL] Test 4: PACKET_COUNT = %0d (expected 2)", rdata);
+
+      axil_read(12'h00C, rdata);
+      if (rdata == 32'h0000_0001)
+        $display("[PASS] Test 4: DROP_COUNT = %0d", rdata);
+      else
+        $display("[FAIL] Test 4: DROP_COUNT = %0d (expected 1)", rdata);
+
+      axil_read(12'h020, rdata);
+      if (rdata == 32'h0000_0001)
+        $display("[PASS] Test 4: RULE_HIT_COUNT[0] = %0d", rdata);
+      else
+        $display("[FAIL] Test 4: RULE_HIT_COUNT[0] = %0d (expected 1)", rdata);
+    end
     repeat (20) @(posedge aclk);
     $display("Simulation complete.");
     $finish;
