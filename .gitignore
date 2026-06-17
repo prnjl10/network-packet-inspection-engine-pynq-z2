@@ -29,3 +29,8 @@ Thumbs.db
 docs/packet_inspector_interview_prep.md
 docs/packet_inspector_system_reference.md
 docs/packet_inspector_system_reference.pdf
+
+# Vivado project + build artifacts (not versioned)
+hardware/vivado/
+hardware/hardware/
+hardware/ip/
