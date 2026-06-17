@@ -19,7 +19,8 @@ Phase 1: Complete — validated on PYNQ-Z2 hardware.
 ## Live Demo
 The notebook in `software/` streams synthetic mixed traffic through the engine on the board and reads the inspector's counters back over AXI-Lite in real time.
 
-![Live traffic dashboard](docs/dashboard.png)
+<img width="493" height="164" alt="image" src="https://github.com/user-attachments/assets/e9dcacaf-2a85-4824-87fd-da499ae96224" />
+
 
 - **Left — cumulative classification:** total packets inspected versus how many were dropped, passed, and flagged as anomalies, accumulating as traffic is injected.
 - **Right — per-rule and per-anomaly hits:** which detector is firing. Rule 0 ("drop all TCP") catches every TCP packet, and anomaly detector 1 (illegal TCP SYN+FIN) catches the malformed frames.
