@@ -16,6 +16,7 @@ A hardware-accelerated deep network packet inspection reference design on the Xi
 - Languages: SystemVerilog, Python 3
 ## Status
 Phase 1: Complete — validated on PYNQ-Z2 hardware.
+Phase 2: In progress!
 ## Live Demo
 The notebook in `software/` streams synthetic mixed traffic through the engine on the board and reads the inspector's counters back over AXI-Lite in real time.
 
