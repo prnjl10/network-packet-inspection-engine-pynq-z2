@@ -25,4 +25,4 @@ The notebook in `software/` streams synthetic mixed traffic through the engine o
 - **Left — cumulative classification:** total packets inspected versus how many were dropped, passed, and flagged as anomalies, accumulating as traffic is injected.
 - **Right — per-rule and per-anomaly hits:** which detector is firing. Rule 0 ("drop all TCP") catches every TCP packet, and anomaly detector 1 (illegal TCP SYN+FIN) catches the malformed frames.
 
-Final run: **703 packets** inspected, **492 dropped** by rule 0, and **158 SYN+FIN anomalies** flagged — all read from the hardware counters, not simulated.
+Final run: **703 packets** inspected, **492 dropped** by rule 0, and **158 SYN+FIN anomalies** flagged, all read from the hardware counters, not simulated.
